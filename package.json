@@ -10,7 +10,8 @@
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",
-    "dev": "tsup src/index.ts --watch --dts"
+    "dev": "tsup src/index.ts --watch --dts",
+    "test": "vitest"
   },
   "keywords": [
     "nextjs",
@@ -22,12 +23,14 @@
   "author": "Matthew Hrehirchuk",
   "license": "MIT",
   "dependencies": {
+    "picocolors": "^1.1.1",
     "zod": "^4.1.9"
   },
   "devDependencies": {
     "@types/node": "^24.5.2",
     "tsup": "^8.5.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
   },
   "publishConfig": {
     "access": "public"

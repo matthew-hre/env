@@ -17,7 +17,7 @@ First, create an `env.ts` file in your project (e.g. in the `lib` folder):
 ```ts
 // lib/env.ts
 import { z } from "zod";
-import { loadEnv } from "next-typed-env";
+import { loadEnv } from "@matthew-hre/env";
 
 const schema = z.object({
   NODE_ENV: z.string(),
@@ -57,6 +57,14 @@ console.log(env.NEXT_PUBLIC_API_URL);
 ```
 
 This is type safe and will give you autocompletion based on your schema. Additionally, errors will be thrown at runtime if the environment variables do not match the schema.
+
+## Configuration
+
+The `loadEnv` function accepts two optional parameters: `env` and `options`.
+
+- `env`: An object representing the environment variables to validate. Defaults to `process.env`.
+- `options`: An object containing options to customize the behavior of the `loadEnv` function.
+  - `exitOnError`: If set to `true`, the process will exit with a non-zero status code if the environment variables are invalid. Defaults to `true`.
 
 ## License
 
