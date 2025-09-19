@@ -1,0 +1,32 @@
+{
+  "name": "@matthew-hre/env",
+  "version": "0.1.0",
+  "description": "Type safe environment variable validation for NextJS projects",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "dev": "tsup src/index.ts --watch --dts"
+  },
+  "keywords": [
+    "nextjs",
+    "zod",
+    "env",
+    "typed",
+    "validation"
+  ],
+  "author": "Matthew Hrehirchuk",
+  "license": "MIT",
+  "dependencies": {
+    "zod": "^4.1.9"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2"
+  }
+}
