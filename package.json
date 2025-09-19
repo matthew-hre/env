@@ -28,5 +28,8 @@
     "@types/node": "^24.5.2",
     "tsup": "^8.5.0",
     "typescript": "^5.9.2"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
