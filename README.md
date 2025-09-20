@@ -18,8 +18,8 @@ For NextJS projects, you can separate client and server environment variables fo
 
 ```ts
 // lib/env.ts
-import { z } from "zod";
 import { loadEnv } from "@matthew-hre/env";
+import { z } from "zod";
 
 const schema = {
   server: z.object({
@@ -45,9 +45,9 @@ export const { serverEnv, clientEnv } = loadEnv(schema);
 For simpler projects or backward compatibility, you can still use the original single schema format:
 
 ```ts
+import { loadEnv } from "@matthew-hre/env";
 // lib/env.ts
 import { z } from "zod";
-import { loadEnv } from "@matthew-hre/env";
 
 const schema = z.object({
   NODE_ENV: z.string(),
@@ -64,13 +64,14 @@ export const env = loadEnv(schema);
 
 Import the `env` file in your `next.config.js`. This is enough to ensure the environment variables are validated at build time.
 
-```js
+```ts
 // next.config.ts
 import type { NextConfig } from "next";
+
 import "src/lib/env";
 
 const nextConfig: NextConfig = {
-  ...
+  // ...
 };
 
 export default nextConfig;
@@ -82,13 +83,13 @@ export default nextConfig;
 
 ```ts
 // server-side code (api routes, etc.)
-import { serverEnv, clientEnv } from "src/lib/env";
+import { clientEnv, serverEnv } from "src/lib/env";
 
 export async function GET() {
   // can access both server and client variables
   const dbUrl = serverEnv.DATABASE_URL;
   const apiUrl = clientEnv.NEXT_PUBLIC_API_URL;
-  
+
   // full type safety and autocompletion
   return fetch(`${apiUrl}/data`, {
     headers: { authorization: serverEnv.SECRET_KEY }
@@ -96,7 +97,7 @@ export async function GET() {
 }
 ```
 
-```ts
+```tsx
 // client-side code (components, hooks, etc.)
 "use client";
 
@@ -105,8 +106,13 @@ import { clientEnv } from "src/lib/env";
 export function ApiClient() {
   // can access client variables
   const apiUrl = clientEnv.NEXT_PUBLIC_API_URL;
-  
-  return <span>API URL: {apiUrl}</span>;
+
+  return (
+    <span>
+      API URL:
+      {apiUrl}
+    </span>
+  );
 }
 ```
 
