@@ -1,7 +1,7 @@
 {
   "name": "@matthew-hre/env",
   "type": "module",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Type safe environment variable validation for NextJS projects",
   "author": "Matthew Hrehirchuk",
   "license": "MIT",
