@@ -1,37 +1,10 @@
-import { ZodError, ZodObject, ZodRawShape, z } from "zod";
-import pc from "picocolors";
-
-export interface LoadEnvOptions {
-    exitOnError?: boolean;
-}
+import { ZodError, ZodObject, ZodRawShape } from "zod";
+import { LoadEnvOptions, ClientServerSchema, LoadEnvResult } from "./types";
+import { handleClientServerErrors, handleSingleSchemaError } from "./error-handling";
 
 const defaultOptions: LoadEnvOptions = {
     exitOnError: true,
 };
-
-export interface ClientServerSchema {
-    server: ZodObject<any>;
-    client: ZodObject<any>;
-}
-
-type IsClientServerSchema<T> = T extends ClientServerSchema ? true : false;
-
-/*
- * this thing is gnarly: basically, if T is a ClientServerSchema,
- * we want to return { serverEnv: ..., clientEnv: ... }
- * otherwise, if T is a ZodObject, we just return the parsed env object
- */
-export type LoadEnvResult<T> = IsClientServerSchema<T> extends true
-    ? T extends { server: infer S; client: infer C }
-    ? S extends ZodObject<any>
-    ? C extends ZodObject<any>
-    ? { serverEnv: z.output<S>; clientEnv: z.output<C> }
-    : never
-    : never
-    : never
-    : T extends ZodObject<infer R>
-    ? z.output<ZodObject<R>>
-    : never;
 
 // overload for different schema types
 export function loadEnv<T extends ClientServerSchema>(
@@ -131,36 +104,4 @@ function parseSingleSchema(
         }
         throw err;
     }
-}
-
-function handleClientServerErrors(
-    errors: { context: 'server' | 'client'; error: ZodError }[],
-    options: LoadEnvOptions
-): void {
-    let message = pc.red("Invalid environment variables:\n");
-
-    errors.forEach(({ context, error }) => {
-        message += pc.yellow(`\n${context.toUpperCase()} variables:\n`);
-        error.issues.forEach((issue) => {
-            const name = String(issue.path[0]);
-            message += ` - ${pc.bold(name)} ${pc.dim("(" + issue.message + ")")}\n`;
-        });
-    });
-
-    console.error(message);
-
-    if (options.exitOnError) {
-        process.exit(1);
-    }
-
-    throw errors[0].error;
-}
-
-function handleSingleSchemaError(error: ZodError): void {
-    let message = pc.red("Invalid environment variables:\n");
-    error.issues.forEach((issue) => {
-        const name = String(issue.path[0]);
-        message += ` - ${pc.bold(name)} ${pc.dim("(" + issue.message + ")")}\n`;
-    });
-    console.error(message);
 }
