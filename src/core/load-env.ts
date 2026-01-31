@@ -63,17 +63,28 @@ function parseClientServerSchema(
   let serverEnv: any;
   let clientEnv: any;
 
+  const isServer = typeof window === "undefined";
+
   // server environment variables
-  try {
-    serverEnv = schema.server.parse(env);
+  if (isServer) {
+    try {
+      serverEnv = schema.server.parse(env);
+    }
+    catch (err) {
+      if (isZodError(err)) {
+        errors.push({ context: "server", error: err });
+      }
+      else {
+        throw err;
+      }
+    }
   }
-  catch (err) {
-    if (isZodError(err)) {
-      errors.push({ context: "server", error: err });
-    }
-    else {
-      throw err;
-    }
+  else {
+    serverEnv = new Proxy({}, {
+      get: () => {
+        throw new Error("❌ Attempted to access a server-side environment variable on the client");
+      },
+    });
   }
 
   // client environment variables
