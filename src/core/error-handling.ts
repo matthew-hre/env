@@ -1,11 +1,11 @@
-import type { ZodError } from "zod";
+import type { $ZodError } from "zod/v4/core";
 
 import pc from "picocolors";
 
 import type { LoadEnvOptions } from "./types";
 
 export function handleClientServerErrors(
-  errors: { context: "server" | "client"; error: ZodError }[],
+  errors: { context: "server" | "client"; error: $ZodError }[],
   options: LoadEnvOptions,
 ): void {
   let message = pc.red("Invalid environment variables:\n");
@@ -27,7 +27,7 @@ export function handleClientServerErrors(
   throw errors[0].error;
 }
 
-export function handleSingleSchemaError(error: ZodError): void {
+export function handleSingleSchemaError(error: $ZodError): void {
   let message = pc.red("Invalid environment variables:\n");
   error.issues.forEach((issue) => {
     const name = String(issue.path[0]);

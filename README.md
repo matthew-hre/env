@@ -19,7 +19,7 @@ For NextJS projects, you can separate client and server environment variables fo
 ```ts
 // lib/env.ts
 import { loadEnv } from "@matthew-hre/env";
-import { z } from "zod";
+import * as z from "zod";
 
 const schema = {
   server: z.object({
@@ -47,7 +47,7 @@ For simpler projects or backward compatibility, you can still use the original s
 ```ts
 import { loadEnv } from "@matthew-hre/env";
 // lib/env.ts
-import { z } from "zod";
+import * as z from "zod";
 
 const schema = z.object({
   NODE_ENV: z.string(),

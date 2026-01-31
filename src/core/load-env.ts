@@ -1,10 +1,17 @@
-import type { ZodRawShape } from "zod";
-
-import { ZodError, ZodObject } from "zod";
+import type { ZodObject, ZodRawShape } from "zod";
+import type { $ZodError, $ZodObject } from "zod/v4/core";
 
 import type { ClientServerSchema, LoadEnvOptions, LoadEnvResult } from "./types";
 
 import { handleClientServerErrors, handleSingleSchemaError } from "./error-handling";
+
+function isZodError(err: unknown): err is $ZodError {
+  return err !== null && typeof err === "object" && "issues" in err && Array.isArray((err as $ZodError).issues);
+}
+
+function isZodObject(schema: unknown): schema is $ZodObject {
+  return schema !== null && typeof schema === "object" && "parse" in schema;
+}
 
 const defaultOptions: LoadEnvOptions = {
   exitOnError: true,
@@ -42,8 +49,8 @@ function isClientServerSchema(schema: any): schema is ClientServerSchema {
     && schema !== null
     && "server" in schema
     && "client" in schema
-    && schema.server instanceof ZodObject
-    && schema.client instanceof ZodObject
+    && isZodObject(schema.server)
+    && isZodObject(schema.client)
   );
 }
 
@@ -52,7 +59,7 @@ function parseClientServerSchema(
   env: Record<string, string | undefined>,
   options: LoadEnvOptions,
 ): { serverEnv: any; clientEnv: any } {
-  const errors: { context: "server" | "client"; error: ZodError }[] = [];
+  const errors: { context: "server" | "client"; error: $ZodError }[] = [];
   let serverEnv: any;
   let clientEnv: any;
 
@@ -61,7 +68,7 @@ function parseClientServerSchema(
     serverEnv = schema.server.parse(env);
   }
   catch (err) {
-    if (err instanceof ZodError) {
+    if (isZodError(err)) {
       errors.push({ context: "server", error: err });
     }
     else {
@@ -79,7 +86,7 @@ function parseClientServerSchema(
     clientEnv = schema.client.parse(clientEnv_variables);
   }
   catch (err) {
-    if (err instanceof ZodError) {
+    if (isZodError(err)) {
       errors.push({ context: "client", error: err });
     }
     else {
@@ -104,7 +111,7 @@ function parseSingleSchema(
     return schema.parse(env);
   }
   catch (err) {
-    if (err instanceof ZodError) {
+    if (isZodError(err)) {
       handleSingleSchemaError(err);
     }
     else {
