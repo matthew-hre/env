@@ -1,16 +1,27 @@
-import type { ZodObject, ZodRawShape } from "zod";
-import type { $ZodError, $ZodObject } from "zod/v4/core";
+import type { StandardSchemaV1 } from "@standard-schema/spec";
 
 import type { ClientServerSchema, LoadEnvOptions, LoadEnvResult } from "./types";
 
 import { handleClientServerErrors, handleSingleSchemaError } from "./error-handling";
 
-function isZodError(err: unknown): err is $ZodError {
-  return err !== null && typeof err === "object" && "issues" in err && Array.isArray((err as $ZodError).issues);
+function isStandardSchema(schema: unknown): schema is StandardSchemaV1 {
+  return (
+    schema !== null
+    && typeof schema === "object"
+    && "~standard" in schema
+    && typeof (schema as StandardSchemaV1)["~standard"].validate === "function"
+  );
 }
 
-function isZodObject(schema: unknown): schema is $ZodObject {
-  return schema !== null && typeof schema === "object" && "parse" in schema;
+function validateSync<I, O>(
+  schema: StandardSchemaV1<I, O>,
+  input: I,
+): StandardSchemaV1.Result<O> {
+  const result = schema["~standard"].validate(input);
+  if (result instanceof Promise) {
+    throw new TypeError("Async validation is not supported. Use a synchronous schema.");
+  }
+  return result;
 }
 
 const defaultOptions: LoadEnvOptions = {
@@ -24,13 +35,13 @@ export function loadEnv<T extends ClientServerSchema>(
   options?: LoadEnvOptions
 ): LoadEnvResult<T>;
 
-export function loadEnv<T extends ZodRawShape>(
-  schema: ZodObject<T>,
+export function loadEnv<T extends StandardSchemaV1<Record<string, string | undefined>, any>>(
+  schema: T,
   env?: Record<string, string | undefined>,
   options?: LoadEnvOptions
-): LoadEnvResult<ZodObject<T>>;
+): LoadEnvResult<T>;
 
-export function loadEnv<T extends ZodObject<any> | ClientServerSchema>(
+export function loadEnv<T extends StandardSchemaV1 | ClientServerSchema>(
   schema: T,
   env: Record<string, string | undefined> = process.env,
   options: LoadEnvOptions = defaultOptions,
@@ -46,7 +57,7 @@ export function loadEnv<T extends ZodObject<any> | ClientServerSchema>(
     return parseClientServerSchema(schema, env, options);
   }
   else {
-    return parseSingleSchema(schema as ZodObject<any>, env, options);
+    return parseSingleSchema(schema as StandardSchemaV1, env, options);
   }
 }
 
@@ -56,8 +67,8 @@ function isClientServerSchema(schema: any): schema is ClientServerSchema {
     && schema !== null
     && "server" in schema
     && "client" in schema
-    && isZodObject(schema.server)
-    && isZodObject(schema.client)
+    && isStandardSchema(schema.server)
+    && isStandardSchema(schema.client)
   );
 }
 
@@ -66,7 +77,7 @@ function parseClientServerSchema(
   env: Record<string, string | undefined>,
   options: LoadEnvOptions,
 ): { serverEnv: any; clientEnv: any } {
-  const errors: { context: "server" | "client"; error: $ZodError }[] = [];
+  const errors: { context: "server" | "client"; issues: readonly StandardSchemaV1.Issue[] }[] = [];
   let serverEnv: any;
   let clientEnv: any;
 
@@ -74,16 +85,12 @@ function parseClientServerSchema(
 
   // server environment variables
   if (isServer) {
-    try {
-      serverEnv = schema.server.parse(env);
+    const result = validateSync(schema.server, env);
+    if ("issues" in result && result.issues) {
+      errors.push({ context: "server", issues: result.issues });
     }
-    catch (err) {
-      if (isZodError(err)) {
-        errors.push({ context: "server", error: err });
-      }
-      else {
-        throw err;
-      }
+    else {
+      serverEnv = result.value;
     }
   }
   else {
@@ -100,16 +107,12 @@ function parseClientServerSchema(
     Object.entries(env).filter(([key]) => key.startsWith("NEXT_PUBLIC_")),
   );
 
-  try {
-    clientEnv = schema.client.parse(clientEnv_variables);
+  const clientResult = validateSync(schema.client, clientEnv_variables);
+  if ("issues" in clientResult && clientResult.issues) {
+    errors.push({ context: "client", issues: clientResult.issues });
   }
-  catch (err) {
-    if (isZodError(err)) {
-      errors.push({ context: "client", error: err });
-    }
-    else {
-      throw err;
-    }
+  else {
+    clientEnv = clientResult.value;
   }
 
   if (errors.length > 0) {
@@ -121,23 +124,19 @@ function parseClientServerSchema(
 
 // legacy single schema format
 function parseSingleSchema(
-  schema: ZodObject<any>,
+  schema: StandardSchemaV1,
   env: Record<string, string | undefined>,
   options: LoadEnvOptions,
 ): any {
-  try {
-    return schema.parse(env);
-  }
-  catch (err) {
-    if (isZodError(err)) {
-      handleSingleSchemaError(err);
-    }
-    else {
-      console.error("Unexpected error while parsing env:", err);
-    }
+  const result = validateSync(schema, env);
+
+  if ("issues" in result && result.issues) {
+    handleSingleSchemaError(result.issues);
     if (options.exitOnError) {
       process.exit(1);
     }
-    throw err;
+    throw new Error(result.issues[0]?.message ?? "Validation failed");
   }
+
+  return result.value;
 }
