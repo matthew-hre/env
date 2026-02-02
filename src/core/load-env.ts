@@ -35,6 +35,13 @@ export function loadEnv<T extends ZodObject<any> | ClientServerSchema>(
   env: Record<string, string | undefined> = process.env,
   options: LoadEnvOptions = defaultOptions,
 ): any {
+  if (options.skipValidation) {
+    if (isClientServerSchema(schema)) {
+      return { serverEnv: env, clientEnv: env };
+    }
+    return env;
+  }
+
   if (isClientServerSchema(schema)) {
     return parseClientServerSchema(schema, env, options);
   }

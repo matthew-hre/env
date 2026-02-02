@@ -18,6 +18,12 @@ describe("loadEnv", () => {
       ).toThrow();
     });
 
+    it("skips validation when skipValidation is true", () => {
+      const schema = z.object({ NODE_ENV: z.string() });
+      const result = loadEnv(schema, {}, { skipValidation: true });
+      expect(result).toEqual({});
+    });
+
     it("parses complex schema", () => {
       const schema = z.object({
         NODE_ENV: z.enum(["development", "production"]),
@@ -100,6 +106,22 @@ describe("loadEnv", () => {
       expect(() =>
         loadEnv(schema, env, { exitOnError: false }),
       ).toThrow();
+    });
+
+    it("skips validation when skipValidation is true", () => {
+      const schema = {
+        server: z.object({
+          NODE_ENV: z.string(),
+          DATABASE_URL: z.string(),
+        }),
+        client: z.object({
+          NEXT_PUBLIC_API_URL: z.string(),
+        }),
+      };
+
+      const result = loadEnv(schema, {}, { skipValidation: true });
+      expect(result.serverEnv).toEqual({});
+      expect(result.clientEnv).toEqual({});
     });
 
     it("only passes NEXT_PUBLIC_ vars to client validation", () => {

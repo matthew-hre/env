@@ -137,12 +137,18 @@ The `loadEnv` function accepts optional parameters:
 - `env`: An object representing the environment variables to validate. Defaults to `process.env`.
 - `options`: An object containing options to customize the behavior:
   - `exitOnError`: If set to `true`, the process will exit with a non-zero status code if the environment variables are invalid. Defaults to `true`.
+  - `skipValidation`: If set to `true`, validation is skipped entirely and the raw env object is returned. Useful for CI environments where env vars may not be set. Defaults to `false`.
 
 ```ts
 const customEnv = { NODE_ENV: "test", NEXT_PUBLIC_API_URL: "http://localhost:3000" };
 const { serverEnv, clientEnv } = loadEnv(schema, customEnv);
 
 const { serverEnv, clientEnv } = loadEnv(schema, process.env, { exitOnError: false });
+
+// Skip validation in CI
+const { serverEnv, clientEnv } = loadEnv(schema, process.env, {
+  skipValidation: !!process.env.CI,
+});
 ```
 
 ## License

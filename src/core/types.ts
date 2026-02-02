@@ -2,6 +2,7 @@ import type { z, ZodObject } from "zod";
 
 export type LoadEnvOptions = {
   exitOnError?: boolean;
+  skipValidation?: boolean;
 };
 
 export type ClientServerSchema = {
